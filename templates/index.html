@@ -17,6 +17,13 @@
             color: red;
             display: none;
         }
+        #validated {
+            display: none;
+        }
+
+        ul {
+            list-style: none;
+        }
     </style>
 </head>
 <body>
@@ -36,11 +43,10 @@
             <option value="October">October</option>
             <option value="November">November</option>
             <option value="December">December</option>
-            
         </select>
         <br>
-        <label for="num_quotes">Number of quotes (1-20):</label>
-        <input type="number" id="num_quotes" name="num_quotes" required value="1" min="1" max="20">
+        <label for="num_quotes">Number of quotes (1-100):</label>
+        <input type="number" id="num_quotes" name="num_quotes" required value="1" min="1" max="100">
         <br>
         <button type="submit" id="submitButton">Get Quotes</button>
     </form>
@@ -48,14 +54,17 @@
     <div id="error"></div>
     <div id="quotesContainer">
         <h2>Quotes:</h2>
-        <ol id="quotesList"></ol>
+        <ul id="quotesList"></ul>
     </div>
     <button id="copyButton">Copy Quotes to Clipboard</button>
+    <!-- <button id="validateButton" style="display: none;">Validate</button> -->
+    <div id="validated"></div>
 
     <script>
         document.getElementById('quoteForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const submitButton = document.getElementById('submitButton');
+            // const validateButton = document.getElementById('validateButton');
             const loadingDiv = document.getElementById('loading');
             const errorDiv = document.getElementById('error');
             const quotesList = document.getElementById('quotesList');
@@ -63,6 +72,7 @@
             submitButton.disabled = true;
             loadingDiv.style.display = 'block';
             errorDiv.style.display = 'none';
+            // validateButton.style.display = 'none';
             quotesList.innerHTML = '';
 
             fetch('/get_quotes', {
@@ -81,9 +91,11 @@
                     const rawQuotes = data.quotes.split('\n')
                     rawQuotes.forEach(q => {
                         const li = document.createElement('li');
-                        li.classList.add("quote-item")
+                        const br = document.createElement('br');
+                        li.classList.add('quote-item');
                         li.textContent = q;
                         quotesList.appendChild(li);
+                        quotesList.appendChild(br);
                     });
                 }
             }).catch(error => {
@@ -96,7 +108,7 @@
 
         document.getElementById('copyButton').addEventListener('click', function() {
             const quotes = [];
-            document.querySelectorAll('#quotesList div').forEach(li => quotes.push(li.textContent));
+            document.querySelectorAll('#quotesList li').forEach(li => quotes.push(li.textContent));
             fetch('/copy_quotes', {
                 method: 'POST',
                 headers: {
@@ -107,6 +119,35 @@
                 alert(data.message || 'Quotes copied to clipboard');
             });
         });
+
+        // Not working right now, but will be added in later
+        // document.getElementById('validateButton').addEventListener('click', function() {
+        //     const quotes = [];
+        //     document.querySelectorAll('.quote-item').forEach(li => quotes.push(li.textContent));
+        //     fetch('/validate_quotes', {
+        //         method: 'POST',
+        //         headers: {
+        //             'Content-Type': 'application/json'
+        //         },
+        //         body: JSON.stringify({ quotes })
+        //     }).then(response => response.json()).then(data => {
+        //         const errorDiv = document.getElementById('error');
+        //         const validatedDiv = document.getElementById('validated');
+        //         if (data.error) {
+        //             errorDiv.textContent = data.error;
+        //             errorDiv.style.display = 'block';
+        //             validatedDiv.style.display = 'none';
+        //         } else {
+        //             validatedDiv.textContent = data.message || 'Quotes validated successfully';
+        //             validatedDiv.style.display = 'block';
+        //             errorDiv.style.display = 'none';
+        //         }
+        //     }).catch(error => {
+        //         const errorDiv = document.getElementById('error');
+        //         errorDiv.textContent = 'An error occurred. Please try again.';
+        //         errorDiv.style.display = 'block';
+        //     });
+        // });
     </script>
 </body>
 </html>
