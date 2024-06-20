@@ -42,7 +42,8 @@ def get_quotes():
         These quotes can be about the month itself, holidays or events in that month,
         or the season that occurs in that month. All quotes must be from a famous person
         or work of art. No quotes can be anonymous. All quotes must have an attribution (attribution = the source of the quote)
-
+        All quotes must be 12 words or less. All quotes must be real quotes.
+        
         Use this format:
         <quote 1> -- <attribution> \n
         <quote 2> -- <attribution> \n
