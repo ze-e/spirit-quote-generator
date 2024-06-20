@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quote Fetcher</title>
+    <style>
+        #loading {
+            display: none;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+        }
+        #error {
+            color: red;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Quote Fetcher</h1>
+    <form id="quoteForm">
+        <label for="month">Choose a month:</label>
+        <select id="month" name="month" required>
+            <option value="January">January</option>
+            <option value="February">February</option>
+            <option value="March">March</option>
+            <option value="April">April</option>
+            <option value="May">May</option>
+            <option value="June">June</option>
+            <option value="July">July</option>
+            <option value="August">August</option>
+            <option value="September">September</option>
+            <option value="October">October</option>
+            <option value="November">November</option>
+            <option value="December">December</option>
+            
+        </select>
+        <br>
+        <label for="num_quotes">Number of quotes (1-20):</label>
+        <input type="number" id="num_quotes" name="num_quotes" required value="1" min="1" max="20">
+        <br>
+        <button type="submit" id="submitButton">Get Quotes</button>
+    </form>
+    <div id="loading">Loading...</div>
+    <div id="error"></div>
+    <div id="quotesContainer">
+        <h2>Quotes:</h2>
+        <ol id="quotesList"></ol>
+    </div>
+    <button id="copyButton">Copy Quotes to Clipboard</button>
+
+    <script>
+        document.getElementById('quoteForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const submitButton = document.getElementById('submitButton');
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const quotesList = document.getElementById('quotesList');
+            
+            submitButton.disabled = true;
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            quotesList.innerHTML = '';
+
+            fetch('/get_quotes', {
+                method: 'POST',
+                body: new FormData(this)
+            }).then(response => response.json()).then(data => {
+                loadingDiv.style.display = 'none';
+                submitButton.disabled = false;
+                if (data.error) {
+                    errorDiv.textContent = data.error;
+                    errorDiv.style.display = 'block';
+                } else if (!data.quotes) {
+                    errorDiv.textContent = 'No quotes found for the selected month.';
+                    errorDiv.style.display = 'block';
+                } else {
+                    const rawQuotes = data.quotes.split('\n')
+                    rawQuotes.forEach(q => {
+                        const li = document.createElement('li');
+                        li.classList.add("quote-item")
+                        li.textContent = q;
+                        quotesList.appendChild(li);
+                    });
+                }
+            }).catch(error => {
+                loadingDiv.style.display = 'none';
+                submitButton.disabled = false;
+                errorDiv.textContent = 'An error occurred. Please try again.';
+                errorDiv.style.display = 'block';
+            });
+        });
+
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const quotes = [];
+            document.querySelectorAll('#quotesList div').forEach(li => quotes.push(li.textContent));
+            fetch('/copy_quotes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ quotes })
+            }).then(response => response.json()).then(data => {
+                alert(data.message || 'Quotes copied to clipboard');
+            });
+        });
+    </script>
+</body>
+</html>
